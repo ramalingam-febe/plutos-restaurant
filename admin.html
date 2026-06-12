@@ -1,0 +1,602 @@
+<!-- admin.html - Admin Dashboard with Login Protection -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plutos Admin | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            padding: 28px 24px;
+        }
+        h1, h2 {
+            font-weight: 700;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        button {
+            background: #c0392b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button.outline {
+            background: transparent;
+            border: 1px solid #c0392b;
+            color: #c0392b;
+        }
+        button.secondary {
+            background: #2c3e50;
+        }
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+        .card-stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 24px;
+            text-align: center;
+        }
+        .card-stats h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .card-stats .number {
+            font-size: 32px;
+            font-weight: 800;
+        }
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .filters input, .filters select {
+            padding: 10px 16px;
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            font-size: 14px;
+            flex: 1;
+        }
+        .orders-table {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        .order-row {
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .order-row:hover {
+            background: #fef9e8;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .status-completed {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .detail-view {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+        .receipt-box {
+            font-family: monospace;
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            white-space: pre-line;
+            font-size: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .login-container {
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 28px;
+            border: 1px solid #dce3ec;
+            font-size: 16px;
+        }
+        .error-msg {
+            background: #fee2e2;
+            color: #c0392b;
+            padding: 12px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .container { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div id="adminApp"></div>
+
+<script>
+    // Database keys
+    const STORAGE_KEYS = {
+        ORDERS: 'plutos_orders',
+        USERS: 'plutos_users',
+        MENU: 'plutos_menu'
+    };
+
+    // Initialize data
+    function initData() {
+        if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+            localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([{ username: "ram", password: "123", role: "admin" }]));
+        }
+        if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
+            const sampleItems = [
+                { itemId: 101, itemName: "Idli", quantity: 2, rate: 40 },
+                { itemId: 103, itemName: "Coffee", quantity: 1, rate: 25 }
+            ];
+            localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([{
+                orderId: "PLR000001", tableNumber: 5, mobileNumber: "9876543210", items: sampleItems,
+                status: "Pending", orderDateTime: new Date().toISOString(), totalBeforeTax: 105
+            }]));
+        }
+        if (!localStorage.getItem(STORAGE_KEYS.MENU)) {
+            const menuItems = [
+                { id: 101, name: "Idli", category: "Breakfast", rate: 40 },
+                { id: 102, name: "Dosa", category: "Breakfast", rate: 60 },
+                { id: 103, name: "Coffee", category: "Beverages", rate: 25 },
+                { id: 104, name: "Tea", category: "Beverages", rate: 20 },
+                { id: 201, name: "Veg Thali", category: "Lunch", rate: 120 },
+                { id: 202, name: "Chicken Biryani", category: "Lunch", rate: 180 },
+                { id: 301, name: "Grill Platter", category: "Dinner", rate: 250 },
+                { id: 302, name: "Butter Naan", category: "Dinner", rate: 35 },
+                { id: 401, name: "Gulab Jamun", category: "Desserts", rate: 50 },
+                { id: 402, name: "Ice Cream", category: "Desserts", rate: 70 },
+                { id: 501, name: "Paneer Tikka", category: "Starters", rate: 160 },
+                { id: 502, name: "Spring Rolls", category: "Starters", rate: 90 }
+            ];
+            localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(menuItems));
+        }
+    }
+    initData();
+
+    let adminState = {
+        authenticated: false,
+        selectedOrder: null,
+        filterStatus: "all",
+        searchTerm: "",
+        loginError: ""
+    };
+
+    function getOrders() {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS));
+    }
+
+    function saveOrders(orders) {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+    }
+
+    function updateOrderStatus(orderId, newStatus) {
+        const orders = getOrders();
+        const index = orders.findIndex(o => o.orderId === orderId);
+        if (index !== -1) {
+            orders[index].status = newStatus;
+            saveOrders(orders);
+            return true;
+        }
+        return false;
+    }
+
+    function renderAdmin() {
+        const container = document.getElementById("adminApp");
+        if (!container) return;
+        
+        if (!adminState.authenticated) {
+            renderLogin(container);
+        } else {
+            renderDashboard(container);
+        }
+    }
+
+    function renderLogin(container) {
+        container.innerHTML = `
+            <div class="container login-container">
+                <div style="text-align: center; margin-bottom: 32px;">
+                    <div style="background: #f1c40f; width: 70px; height: 70px; border-radius: 70px; display: inline-flex; align-items: center; justify-content: center; font-size: 36px; margin-bottom: 16px;">🍽️</div>
+                    <h1 style="color: #c0392b;">PLUTOS RESTAURANT</h1>
+                    <p style="color: #666;">Admin Portal</p>
+                </div>
+                ${adminState.loginError ? `<div class="error-msg">❌ ${adminState.loginError}</div>` : ''}
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUser" placeholder="Enter username" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPass" placeholder="Enter password">
+                </div>
+                <button id="doLoginBtn" style="width:100%;">Login to Dashboard →</button>
+                <div style="text-align: center; margin-top: 24px; font-size: 13px; color: #888;">
+                    Demo credentials: <strong>ram</strong> / <strong>123</strong>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById("doLoginBtn")?.addEventListener("click", () => {
+            const user = document.getElementById("loginUser").value.trim();
+            const pwd = document.getElementById("loginPass").value;
+            const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS));
+            const validUser = users.find(u => u.username === user && u.password === pwd);
+            
+            if (validUser) {
+                adminState.authenticated = true;
+                adminState.selectedOrder = null;
+                adminState.loginError = "";
+                renderAdmin();
+            } else {
+                adminState.loginError = "Invalid username or password. Use ram / 123";
+                renderAdmin();
+            }
+        });
+        
+        // Allow Enter key
+        const handleEnter = (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById("doLoginBtn")?.click();
+            }
+        };
+        document.getElementById("loginPass")?.addEventListener("keypress", handleEnter);
+        document.getElementById("loginUser")?.addEventListener("keypress", handleEnter);
+    }
+
+    function renderDashboard(container) {
+        let orders = getOrders();
+        let filtered = [...orders];
+        
+        const today = new Date().toISOString().slice(0, 10);
+        if (adminState.filterStatus === "today") {
+            filtered = filtered.filter(o => o.orderDateTime.slice(0, 10) === today);
+        } else if (adminState.filterStatus === "pending") {
+            filtered = filtered.filter(o => o.status === "Pending");
+        } else if (adminState.filterStatus === "completed") {
+            filtered = filtered.filter(o => o.status === "Completed");
+        }
+        
+        if (adminState.searchTerm) {
+            const term = adminState.searchTerm.toLowerCase();
+            filtered = filtered.filter(o => 
+                o.orderId.toLowerCase().includes(term) || 
+                o.mobileNumber.includes(term) || 
+                o.tableNumber.toString().includes(term)
+            );
+        }
+        
+        const totalOrders = filtered.length;
+        const activeTables = new Set(filtered.map(o => o.tableNumber)).size;
+        const todayRevenue = filtered.filter(o => o.orderDateTime.slice(0, 10) === today).reduce((sum, o) => sum + (o.totalBeforeTax || 0), 0);
+        const pendingCount = getOrders().filter(o => o.status === "Pending").length;
+        
+        const ordersHtml = filtered.map(order => `
+            <tr class="order-row" data-orderid="${order.orderId}">
+                <td><strong>${order.orderId}</strong></td>
+                <td>🪑 ${order.tableNumber}</td>
+                <td>📞 ${order.mobileNumber}</td>
+                <td><span class="status-badge status-${order.status === 'Pending' ? 'pending' : 'completed'}">${order.status}</span></td>
+                <td>${new Date(order.orderDateTime).toLocaleString()}</td>
+                <td>₹${order.totalBeforeTax || 0}</td>
+            </tr>
+        `).join('');
+        
+        // Selected Order Details View
+        let selectedOrderHtml = '';
+        if (adminState.selectedOrder) {
+            const order = getOrders().find(o => o.orderId === adminState.selectedOrder);
+            if (order) {
+                const subtotal = order.items.reduce((s, i) => s + (i.quantity * i.rate), 0);
+                const cgst = subtotal * 0.025;
+                const sgst = subtotal * 0.025;
+                const grandTotal = subtotal + cgst + sgst;
+                
+                const itemsTableRows = order.items.map((item, idx) => `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>${item.itemId}</td>
+                        <td>${item.itemName}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${item.rate}</td>
+                        <td>₹${item.rate * item.quantity}</td>
+                    </tr>
+                `).join('');
+                
+                // KOT Format (Kitchen Order Ticket - no rates)
+                const kotReceipt = `PLUTOS RESTAURANT
+================================
+KITCHEN ORDER TICKET
+--------------------------------
+Order ID: ${order.orderId}
+Table: ${order.tableNumber}
+Date: ${new Date(order.orderDateTime).toLocaleString()}
+--------------------------------
+${order.items.map((item, idx) => `${idx + 1}. ${item.itemName} x${item.quantity}`).join('\n')}
+--------------------------------
+Kitchen Use Only
+Thank You`;
+                
+                // Bill Format (with GST)
+                const billReceipt = `PLUTOS RESTAURANT
+================================
+CUSTOMER BILL
+--------------------------------
+Order ID: ${order.orderId}
+Table: ${order.tableNumber}
+Mobile: ${order.mobileNumber}
+Date: ${new Date(order.orderDateTime).toLocaleString()}
+--------------------------------
+${order.items.map(item => `${item.itemName} x${item.quantity} @₹${item.rate} = ₹${item.rate * item.quantity}`).join('\n')}
+--------------------------------
+Subtotal: ₹${subtotal}
+CGST (2.5%): ₹${cgst.toFixed(2)}
+SGST (2.5%): ₹${sgst.toFixed(2)}
+--------------------------------
+GRAND TOTAL: ₹${grandTotal.toFixed(2)}
+--------------------------------
+Thank You! Visit Again`;
+                
+                const whatsappMsg = encodeURIComponent(`PLUTOS RESTAURANT BILL\nOrder: ${order.orderId}\nTable: ${order.tableNumber}\n\n${order.items.map(i => `${i.itemName} x${i.quantity} = ₹${i.rate * i.quantity}`).join('\n')}\n\nSubtotal: ₹${subtotal}\nCGST: ₹${cgst.toFixed(2)}\nSGST: ₹${sgst.toFixed(2)}\nGrand Total: ₹${grandTotal.toFixed(2)}`);
+                
+                selectedOrderHtml = `
+                    <div class="detail-view">
+                        <div class="flex-between" style="margin-bottom: 20px;">
+                            <h3>📄 Order Details: ${order.orderId}</h3>
+                            <div>
+                                <select id="statusSelect" class="status-select">
+                                    <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>⏳ Pending</option>
+                                    <option value="Completed" ${order.status === 'Completed' ? 'selected' : ''}>✅ Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <p><strong>🪑 Table:</strong> ${order.tableNumber} &nbsp;|&nbsp; <strong>📞 Mobile:</strong> ${order.mobileNumber}</p>
+                            <p><strong>📅 Date & Time:</strong> ${new Date(order.orderDateTime).toLocaleString()}</p>
+                        </div>
+                        
+                        <h4>Order Items</h4>
+                        <table style="width:100%; margin-top: 12px;">
+                            <thead><tr><th>SL</th><th>Item ID</th><th>Item Name</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+                            <tbody>${itemsTableRows}</tbody>
+                        </table>
+                        
+                        <div style="margin-top: 20px; padding: 16px; background: white; border-radius: 16px;">
+                            <div class="flex-between"><span>Subtotal:</span><span>₹${subtotal}</span></div>
+                            <div class="flex-between"><span>CGST (2.5%):</span><span>₹${cgst.toFixed(2)}</span></div>
+                            <div class="flex-between"><span>SGST (2.5%):</span><span>₹${sgst.toFixed(2)}</span></div>
+                            <div class="flex-between" style="margin-top: 8px; padding-top: 8px; border-top: 2px solid #e2e8f0; font-weight: 700;"><span>Grand Total:</span><span>₹${grandTotal.toFixed(2)}</span></div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button id="printKotBtn">🧾 Print KOT (Kitchen)</button>
+                            <button id="printBillBtn">🧾 Print Bill</button>
+                            <button id="whatsappBtn">📲 Share via WhatsApp</button>
+                            <button id="closeDetailBtn" class="outline">✖ Close</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        container.innerHTML = `
+            <div class="container">
+                <div class="flex-between">
+                    <div>
+                        <h1>🍽️ PLUTOS ADMIN DASHBOARD</h1>
+                        <p style="color: #666; margin-top: 4px;">Manage orders, print KOT & Bills</p>
+                    </div>
+                    <button id="logoutBtn" class="outline">🚪 Logout</button>
+                </div>
+                
+                <div class="dashboard-cards">
+                    <div class="card-stats"><h3>📦 Total Orders</h3><div class="number">${totalOrders}</div></div>
+                    <div class="card-stats"><h3>🪑 Active Tables</h3><div class="number">${activeTables}</div></div>
+                    <div class="card-stats"><h3>💰 Today's Revenue</h3><div class="number">₹${todayRevenue}</div></div>
+                    <div class="card-stats"><h3>⏳ Pending Orders</h3><div class="number">${pendingCount}</div></div>
+                </div>
+                
+                <div class="filters">
+                    <input type="text" id="searchInput" placeholder="🔍 Search by Order ID / Mobile / Table" value="${adminState.searchTerm}">
+                    <select id="filterSelect">
+                        <option value="all" ${adminState.filterStatus === 'all' ? 'selected' : ''}>All Orders</option>
+                        <option value="today" ${adminState.filterStatus === 'today' ? 'selected' : ''}>Today's Orders</option>
+                        <option value="pending" ${adminState.filterStatus === 'pending' ? 'selected' : ''}>Pending Orders</option>
+                        <option value="completed" ${adminState.filterStatus === 'completed' ? 'selected' : ''}>Completed Orders</option>
+                    </select>
+                    <button id="refreshBtn" class="secondary">🔄 Refresh</button>
+                </div>
+                
+                <div class="orders-table">
+                    <table>
+                        <thead>
+                            <tr><th>Order ID</th><th>Table</th><th>Mobile</th><th>Status</th><th>Date Time</th><th>Amount</th></tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            ${ordersHtml || '<tr><td colspan="6" style="text-align:center;">No orders found</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+                
+                ${selectedOrderHtml}
+            </div>
+        `;
+        
+        // Event Listeners
+        document.getElementById("logoutBtn")?.addEventListener("click", () => {
+            adminState.authenticated = false;
+            adminState.selectedOrder = null;
+            renderAdmin();
+        });
+        
+        document.getElementById("searchInput")?.addEventListener("input", (e) => {
+            adminState.searchTerm = e.target.value;
+            renderDashboard(container);
+        });
+        
+        document.getElementById("filterSelect")?.addEventListener("change", (e) => {
+            adminState.filterStatus = e.target.value;
+            renderDashboard(container);
+        });
+        
+        document.getElementById("refreshBtn")?.addEventListener("click", () => {
+            renderDashboard(container);
+        });
+        
+        document.querySelectorAll(".order-row").forEach(row => {
+            row.addEventListener("click", () => {
+                adminState.selectedOrder = row.dataset.orderid;
+                renderDashboard(container);
+            });
+        });
+        
+        // Status change handler
+        const statusSelect = document.getElementById("statusSelect");
+        if (statusSelect) {
+            statusSelect.addEventListener("change", (e) => {
+                if (adminState.selectedOrder) {
+                    updateOrderStatus(adminState.selectedOrder, e.target.value);
+                    renderDashboard(container);
+                }
+            });
+        }
+        
+        document.getElementById("printKotBtn")?.addEventListener("click", () => {
+            if (adminState.selectedOrder) {
+                const order = getOrders().find(o => o.orderId === adminState.selectedOrder);
+                if (order) {
+                    const kot = `PLUTOS RESTAURANT\n================================\nKITCHEN ORDER TICKET\n--------------------------------\nOrder ID: ${order.orderId}\nTable: ${order.tableNumber}\nDate: ${new Date(order.orderDateTime).toLocaleString()}\n--------------------------------\n${order.items.map((item, idx) => `${idx + 1}. ${item.itemName} x${item.quantity}`).join('\n')}\n--------------------------------\nKitchen Use Only\nThank You`;
+                    printReceipt(kot);
+                }
+            }
+        });
+        
+        document.getElementById("printBillBtn")?.addEventListener("click", () => {
+            if (adminState.selectedOrder) {
+                const order = getOrders().find(o => o.orderId === adminState.selectedOrder);
+                if (order) {
+                    const subtotal = order.items.reduce((s, i) => s + (i.quantity * i.rate), 0);
+                    const cgst = subtotal * 0.025;
+                    const sgst = subtotal * 0.025;
+                    const grandTotal = subtotal + cgst + sgst;
+                    const bill = `PLUTOS RESTAURANT\n================================\nCUSTOMER BILL\n--------------------------------\nOrder ID: ${order.orderId}\nTable: ${order.tableNumber}\nMobile: ${order.mobileNumber}\nDate: ${new Date(order.orderDateTime).toLocaleString()}\n--------------------------------\n${order.items.map(item => `${item.itemName} x${item.quantity} @₹${item.rate} = ₹${item.rate * item.quantity}`).join('\n')}\n--------------------------------\nSubtotal: ₹${subtotal}\nCGST (2.5%): ₹${cgst.toFixed(2)}\nSGST (2.5%): ₹${sgst.toFixed(2)}\n--------------------------------\nGRAND TOTAL: ₹${grandTotal.toFixed(2)}\n--------------------------------\nThank You! Visit Again`;
+                    printReceipt(bill);
+                }
+            }
+        });
+        
+        document.getElementById("whatsappBtn")?.addEventListener("click", () => {
+            if (adminState.selectedOrder) {
+                const order = getOrders().find(o => o.orderId === adminState.selectedOrder);
+                if (order) {
+                    const subtotal = order.items.reduce((s, i) => s + (i.quantity * i.rate), 0);
+                    const cgst = subtotal * 0.025;
+                    const sgst = subtotal * 0.025;
+                    const grandTotal = subtotal + cgst + sgst;
+                    const msg = encodeURIComponent(`PLUTOS RESTAURANT BILL\nOrder: ${order.orderId}\nTable: ${order.tableNumber}\n\n${order.items.map(i => `${i.itemName} x${i.quantity} = ₹${i.rate * i.quantity}`).join('\n')}\n\nSubtotal: ₹${subtotal}\nCGST: ₹${cgst.toFixed(2)}\nSGST: ₹${sgst.toFixed(2)}\nGrand Total: ₹${grandTotal.toFixed(2)}`);
+                    window.open(`https://wa.me/${order.mobileNumber}?text=${msg}`, '_blank');
+                }
+            }
+        });
+        
+        document.getElementById("closeDetailBtn")?.addEventListener("click", () => {
+            adminState.selectedOrder = null;
+            renderDashboard(container);
+        });
+    }
+    
+    function printReceipt(content) {
+        const printWindow = window.open('', '_blank', 'width=400,height=600');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head><title>Print Receipt</title>
+            <style>
+                body { font-family: monospace; font-size: 12px; padding: 16px; margin: 0; width: 80mm; }
+                pre { white-space: pre-line; font-family: monospace; }
+            </style>
+            </head>
+            <body><pre>${content}</pre></body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+    
+    renderAdmin();
+</script>
+</body>
+</html>

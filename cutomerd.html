@@ -1,0 +1,540 @@
+<!-- customer.html - Customer facing page with auto table detection -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Plutos Restaurant | Order Online</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f7f9fc;
+            color: #1e2a3e;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 24px 20px 32px;
+        }
+        h1, h2, h3 {
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo-placeholder {
+            background: #f1c40f;
+            width: 80px;
+            height: 80px;
+            border-radius: 80px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 42px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .restaurant-name {
+            font-size: 28px;
+            font-weight: 800;
+            text-align: center;
+            margin: 12px 0 4px;
+            color: #c0392b;
+        }
+        .tagline {
+            text-align: center;
+            color: #4b6e8a;
+            margin-bottom: 24px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid #eef2f6;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 28px;
+            border: 1px solid #dce3ec;
+            font-size: 16px;
+            background: #fff;
+            transition: 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #c0392b;
+            box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+        }
+        button {
+            background: #c0392b;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.2s;
+        }
+        button.secondary {
+            background: #2c3e50;
+        }
+        button.outline {
+            background: transparent;
+            border: 1px solid #c0392b;
+            color: #c0392b;
+        }
+        .menu-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .item-info {
+            flex: 2;
+        }
+        .item-name {
+            font-weight: 600;
+        }
+        .item-id {
+            font-size: 12px;
+            color: #5a6e7c;
+        }
+        .item-price {
+            font-weight: 700;
+            color: #2c5f2d;
+        }
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f1f5f9;
+            padding: 5px 12px;
+            border-radius: 40px;
+        }
+        .qty-btn {
+            background: white;
+            border: 1px solid #cbd5e1;
+            width: 32px;
+            height: 32px;
+            border-radius: 32px;
+            font-weight: bold;
+            font-size: 20px;
+            cursor: pointer;
+            color: #1e293b;
+        }
+        .qty-num {
+            font-weight: 700;
+            min-width: 28px;
+            text-align: center;
+        }
+        .search-box {
+            margin-bottom: 20px;
+        }
+        .category-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .cat-btn {
+            background: #eef2f6;
+            color: #2c3e50;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            width: auto;
+        }
+        .cat-btn.active {
+            background: #c0392b;
+            color: white;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+        }
+        .table-badge {
+            background: #fef3c7;
+            padding: 10px 16px;
+            border-radius: 40px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .error-msg {
+            color: #e53e3e;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+        @media (max-width: 560px) {
+            body { padding: 12px; }
+            .container { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+    // ---------- DATABASE SIMULATION (localStorage) ----------
+    const STORAGE_KEYS = {
+        ORDERS: 'plutos_orders',
+        MENU: 'plutos_menu'
+    };
+
+    // Initialize menu data
+    function initMenu() {
+        if (!localStorage.getItem(STORAGE_KEYS.MENU)) {
+            const menuItems = [
+                { id: 101, name: "Idli", category: "Breakfast", rate: 40 },
+                { id: 102, name: "Dosa", category: "Breakfast", rate: 60 },
+                { id: 103, name: "Coffee", category: "Beverages", rate: 25 },
+                { id: 104, name: "Tea", category: "Beverages", rate: 20 },
+                { id: 201, name: "Veg Thali", category: "Lunch", rate: 120 },
+                { id: 202, name: "Chicken Biryani", category: "Lunch", rate: 180 },
+                { id: 301, name: "Grill Platter", category: "Dinner", rate: 250 },
+                { id: 302, name: "Butter Naan", category: "Dinner", rate: 35 },
+                { id: 401, name: "Gulab Jamun", category: "Desserts", rate: 50 },
+                { id: 402, name: "Ice Cream", category: "Desserts", rate: 70 },
+                { id: 501, name: "Paneer Tikka", category: "Starters", rate: 160 },
+                { id: 502, name: "Spring Rolls", category: "Starters", rate: 90 }
+            ];
+            localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(menuItems));
+        }
+        if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
+            localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
+        }
+    }
+    initMenu();
+
+    const menuItems = JSON.parse(localStorage.getItem(STORAGE_KEYS.MENU));
+    const categories = [...new Set(menuItems.map(i => i.category))];
+
+    // Helper: Get next Order ID (PLR000001 format)
+    function getNextOrderId() {
+        const orders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS));
+        const lastOrder = orders.slice().sort((a, b) => b.orderId.localeCompare(a.orderId))[0];
+        if (!lastOrder) return "PLR000001";
+        let num = parseInt(lastOrder.orderId.replace("PLR", ""));
+        let next = num + 1;
+        return "PLR" + String(next).padStart(6, '0');
+    }
+
+    // Save order to database
+    function saveOrder(orderData) {
+        const orders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS));
+        const newOrder = { ...orderData, status: "Pending", orderDateTime: new Date().toISOString() };
+        orders.push(newOrder);
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+        return newOrder;
+    }
+
+    // ---------- APP STATE ----------
+    // Get table number from URL automatically
+    const urlParams = new URLSearchParams(window.location.search);
+    const TABLE_NO = urlParams.get("table");
+    
+    let appState = {
+        tableNumber: TABLE_NO ? parseInt(TABLE_NO) : null,
+        mobileNumber: "",
+        cart: [], // { itemId, name, rate, quantity }
+        currentView: "welcome" // welcome, menu, review
+    };
+
+    function render() {
+        const appDiv = document.getElementById("app");
+        if (!appDiv) return;
+        
+        // Validate table number
+        if (!appState.tableNumber || appState.tableNumber < 1 || appState.tableNumber > 10) {
+            appDiv.innerHTML = `
+                <div class="container">
+                    <div class="logo"><div class="logo-placeholder">🍽️</div></div>
+                    <div class="restaurant-name">PLUTOS RESTAURANT</div>
+                    <div class="card" style="text-align:center;">
+                        <h3>⚠️ Invalid QR Code</h3>
+                        <p>Please scan a valid table QR code.</p>
+                        <p style="margin-top:16px;">Table numbers 1 to 10 only.</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        if (appState.currentView === "welcome") renderWelcome(appDiv);
+        else if (appState.currentView === "menu") renderMenuPage(appDiv);
+        else if (appState.currentView === "review") renderReviewOrder(appDiv);
+        else renderWelcome(appDiv);
+    }
+
+    // WELCOME PAGE - Shows table number from QR
+    function renderWelcome(container) {
+        container.innerHTML = `
+            <div class="container">
+                <div class="logo"><div class="logo-placeholder">🍽️</div></div>
+                <div class="restaurant-name">PLUTOS RESTAURANT</div>
+                <div class="tagline">Scan, Order, Savor</div>
+                <div class="table-badge">
+                    🪑 Table Number: ${appState.tableNumber}
+                </div>
+                <div class="card">
+                    <div class="form-group">
+                        <label>📱 Mobile Number (for order updates)</label>
+                        <input type="tel" id="mobileInput" placeholder="Enter 10-digit mobile number" value="${appState.mobileNumber}" pattern="[0-9]{10}">
+                    </div>
+                    <button id="continueBtn">Continue to Menu →</button>
+                </div>
+                <div style="text-align:center; font-size:12px; margin-top:12px; color:#666;">
+                    🔔 GST will be added at billing time
+                </div>
+            </div>
+        `;
+        
+        document.getElementById("continueBtn")?.addEventListener("click", () => {
+            const mobile = document.getElementById("mobileInput").value.trim();
+            const mobileRegex = /^[0-9]{10}$/;
+            if (!mobile || !mobileRegex.test(mobile)) {
+                alert("Please enter a valid 10-digit mobile number");
+                return;
+            }
+            appState.mobileNumber = mobile;
+            appState.currentView = "menu";
+            render();
+        });
+    }
+
+    // MENU PAGE with category, search, quantity
+    function renderMenuPage(container) {
+        let activeCat = "Breakfast";
+        let searchTerm = "";
+        
+        function filterItems() {
+            let items = menuItems.filter(i => i.category === activeCat);
+            if (searchTerm) {
+                items = items.filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()) || i.id.toString().includes(searchTerm));
+            }
+            return items;
+        }
+        
+        function updateCartAndRender() {
+            renderMenuPage(container);
+        }
+        
+        function renderMenuHTML() {
+            const items = filterItems();
+            if (items.length === 0) {
+                return '<div style="text-align:center; padding:40px;">No items found</div>';
+            }
+            return items.map(item => {
+                const cartItem = appState.cart.find(c => c.itemId === item.id);
+                const qty = cartItem ? cartItem.quantity : 0;
+                return `
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">${item.id} | ${item.name}</div>
+                            <div class="item-price">₹${item.rate}</div>
+                        </div>
+                        <div class="quantity-control">
+                            <button class="qty-btn decr" data-id="${item.id}">−</button>
+                            <span class="qty-num">${qty}</span>
+                            <button class="qty-btn incr" data-id="${item.id}">+</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        const totalItems = appState.cart.reduce((sum, i) => sum + i.quantity, 0);
+        
+        container.innerHTML = `
+            <div class="container">
+                <div class="restaurant-name" style="font-size:22px;">PLUTOS · Table ${appState.tableNumber}</div>
+                <div class="table-badge" style="background:#e8f4f8;">📞 ${appState.mobileNumber}</div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Search by name or ID...">
+                </div>
+                <div class="category-tabs" id="categoryTabs"></div>
+                <div class="menu-grid" id="menuGrid"></div>
+                <div style="margin-top:24px; display:flex; gap:12px;">
+                    <button id="reviewOrderBtn" class="secondary">🛒 Review Order (${totalItems} items)</button>
+                </div>
+                <button id="backWelcomeBtn" class="outline" style="margin-top:10px;">← Back</button>
+            </div>
+        `;
+        
+        // Render category tabs
+        const catsDiv = document.getElementById("categoryTabs");
+        categories.forEach(cat => {
+            const btn = document.createElement("button");
+            btn.innerText = cat;
+            btn.className = `cat-btn ${activeCat === cat ? 'active' : ''}`;
+            btn.onclick = () => { activeCat = cat; renderMenuPage(container); };
+            catsDiv.appendChild(btn);
+        });
+        
+        // Render menu items
+        const gridDiv = document.getElementById("menuGrid");
+        gridDiv.innerHTML = renderMenuHTML();
+        
+        // Increase quantity
+        document.querySelectorAll(".incr").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const id = parseInt(btn.dataset.id);
+                const item = menuItems.find(i => i.id === id);
+                const existing = appState.cart.find(c => c.itemId === id);
+                if (existing) {
+                    existing.quantity++;
+                } else {
+                    appState.cart.push({ itemId: item.id, name: item.name, rate: item.rate, quantity: 1 });
+                }
+                renderMenuPage(container);
+            });
+        });
+        
+        // Decrease quantity
+        document.querySelectorAll(".decr").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const id = parseInt(btn.dataset.id);
+                const idx = appState.cart.findIndex(c => c.itemId === id);
+                if (idx !== -1) {
+                    if (appState.cart[idx].quantity > 1) {
+                        appState.cart[idx].quantity--;
+                    } else {
+                        appState.cart.splice(idx, 1);
+                    }
+                }
+                renderMenuPage(container);
+            });
+        });
+        
+        document.getElementById("reviewOrderBtn")?.addEventListener("click", () => {
+            if (appState.cart.length === 0) {
+                alert("Please add at least one item to your order");
+                return;
+            }
+            appState.currentView = "review";
+            render();
+        });
+        
+        document.getElementById("backWelcomeBtn")?.addEventListener("click", () => {
+            appState.currentView = "welcome";
+            render();
+        });
+        
+        document.getElementById("searchInput")?.addEventListener("input", (e) => {
+            searchTerm = e.target.value;
+            renderMenuPage(container);
+        });
+    }
+
+    // REVIEW ORDER PAGE - No GST shown
+    function renderReviewOrder(container) {
+        const itemsHtml = appState.cart.map(item => `
+            <div class="flex-between" style="padding: 8px 0;">
+                <span><strong>${item.itemId}</strong> | ${item.name} x${item.quantity}</span>
+                <span>₹${item.rate * item.quantity}</span>
+            </div>
+        `).join('');
+        
+        const subtotal = appState.cart.reduce((sum, i) => sum + (i.rate * i.quantity), 0);
+        
+        container.innerHTML = `
+            <div class="container">
+                <h2 style="margin-bottom:16px;">📋 Order Summary</h2>
+                <div class="card">
+                    <div class="flex-between"><span>🪑 Table ${appState.tableNumber}</span><span>📞 ${appState.mobileNumber}</span></div>
+                </div>
+                <div class="card">
+                    <div style="font-weight:600; margin-bottom:12px;">Selected Items:</div>
+                    ${itemsHtml || '<p>No items</p>'}
+                    <div class="flex-between" style="margin-top:12px; padding-top:12px; border-top:2px dashed #e2e8f0;">
+                        <span>Subtotal</span>
+                        <span>₹${subtotal}</span>
+                    </div>
+                </div>
+                <div class="card" style="background:#fef2e8; text-align:center;">
+                    ⚠️ <strong>Note:</strong> GST/SGST/CGST will be calculated during billing.
+                </div>
+                <button id="confirmOrderBtn">✅ Confirm Order</button>
+                <button id="backMenuBtn" class="outline" style="margin-top:12px;">← Back to Menu</button>
+            </div>
+        `;
+        
+        document.getElementById("confirmOrderBtn")?.addEventListener("click", () => {
+            const orderId = getNextOrderId();
+            const orderItems = appState.cart.map(itm => ({
+                itemId: itm.itemId,
+                itemName: itm.name,
+                quantity: itm.quantity,
+                rate: itm.rate
+            }));
+            
+            const newOrder = {
+                orderId: orderId,
+                tableNumber: appState.tableNumber,
+                mobileNumber: appState.mobileNumber,
+                items: orderItems,
+                status: "Pending",
+                orderDateTime: new Date().toISOString(),
+                totalBeforeTax: appState.cart.reduce((s, i) => s + (i.rate * i.quantity), 0)
+            };
+            
+            saveOrder(newOrder);
+            
+            alert(`✅ Order Placed Successfully!\n\nOrder ID: ${orderId}\nTable: ${appState.tableNumber}\nTotal Items: ${appState.cart.reduce((s,i)=>s+i.quantity,0)}\n\nOur staff will serve you shortly.`);
+            
+            // Reset cart and go back to welcome
+            appState.cart = [];
+            appState.currentView = "welcome";
+            render();
+        });
+        
+        document.getElementById("backMenuBtn")?.addEventListener("click", () => {
+            appState.currentView = "menu";
+            render();
+        });
+    }
+
+    // Initial render
+    render();
+</script>
+</body>
+</html>
